@@ -1,0 +1,566 @@
+Tests:
+- Impact of different sentiment analysis models on forecasting performance
+- Feature engineering: Weighting posts by engagement, test weighted or not weighted engagement
+- Cross-stock sentiment influence (e.g., NVIDIA sentiment impacting Google stock)
+- Influence of sentiment timing (morning vs. afternoon vs. daily aggregation)
+- Sentiment Volatility: Measure how sentiment changes over time and its correlation with price volatility.
+- Comparison of generic (#investing) vs. stock-specific sentiment ($GOOGL)
+- Ablation studies (with/without sentiment, with/without technical indicators)
+- Granger causality tests if past sentiment helps predict future price movements
+- SHAP (Shapley Additive Explanations) helps explain how much each feature (sentiment, engagement, technical indicators) contributes to predictions
+- Compare SHAP values for different stocks—does sentiment matter more for high-volatility assets like TSLA vs. stable ETFs like SPX?
+Answers:
+Which is the best model for forecasting?
+Is engagement of posts matters?
+Is cross-stock sentiment exists?
+Is social sentiment a leading or lagging indicator?
+Which stock responds most strongly to sentiment shifts?
+Does sentiment work better for short-term or long-term forecasts?
+
+Title: Deep Q-Networks for Stock Prediction: Analyzing the Impact of different NLP Models
+
+Abstract: This research explores a comparasion of several NLP models (FinBERT, GPT-based, DeepSeek) and their ability to leverage stock market prediction. We utilize Twitter posts related to specific stock markets (SP500, Bitcoin, and major tech companies), extract sentiment values and define state spaces for the DDQN algorithm. We evalute different model performance of different and cross-stock influence over win rate and cumulative profit metrics. Our results show... This study provides valuabl einsights into sentiment analysis and their usability for refining reinforcement learning models for stock market prediction. 
+
+Title: Effective Sentiment Analysis in Stock Price Forecasting
+Abstract:
+This study examines the effectiveness of sentiment-based feature engineering in stock market prediction. We collect sentiment data from financial Twitter posts related to major assets, including the S&P 500, Bitcoin, and leading technology companies, and construct various sentiment-driven feature sets. Our analysis explores the impact of weighting posts by engagement, cross-stock sentiment influence, and the distinction between generic vs. stock-specific sentiment signals. These engineered features define alternative state representations for a Double Deep Q-Network (DDQN), allowing for a comparative evaluation of their predictive power. The results provide valuable insights into the role of sentiment-driven features in financial forecasting and highlight their potential to enhance reinforcement learning models for stock price prediction.
+
+Dla przypomnienia tematem mojego artykułu jest synergiczny wpływ poszczególnych parametrów: danych giełdy, współczynników technicznych, ekonomicznych i danych sentymentu na wyniki modeli predykujących giełdę. W pierwszej kolejności będę wyszukiwał przy pomocy Association Rule Miningu skorelowane parametry z ceną w danych okresach czasowych by następnie używać tych parametrów jako stanu dla modeli DDQN w których agent będzie podejmował stosowne decyzje.
+Mając Abstract i wstęp przystępuję do przeglądu literatury. Wstępnie wyselekcjonowałem artykuły o podobnej tematyce. Będę Ci przesyłał opisy i tematy tych artykułów, a Ty pomożesz mi zdecydować czy wspomnieć o danych metodach użytych w tym artykule w moim Literature Review.
+
+1. Introduction
+
+1. Introduction
+The rapid growth of the Internet and digital communication has significantly transformed the way information is exchanged globally. Every day, millions of people share their knowledge, discuss world events, and express their opinions on social media platforms. As a result, social networks play an increasingly influential role in shaping investor sentiment and decision-making in financial markets.
+
+Investors now frequently rely on social media to gauge market sentiment and anticipate stock movements. Platforms such as X (formerly Twitter), Facebook, and Reddit facilitate financial discussions, where users engage under specific hashtags to exchange thoughts on market trends, corporate earnings, and economic policies. This growing reliance on social media has positioned it as a potential leading indicator for stock market trends. However, the challenge remains in determining how to best extract, process, and integrate this information into predictive models.
+
+Natural Language Processing (NLP) plays a crucial role in extracting meaningful insights from this vast amount of textual data. Sentiment analysis, in particular, enables the identification of market mood and its correlation with stock price fluctuations. Recent advancements in NLP, especially Transformer-based models, have significantly improved the accuracy of sentiment extraction, making it a valuable tool for financial forecasting.
+
+However, while prior research has explored sentiment extraction for stock prediction, many studies overlook key feature engineering aspects—such as engagement-weighted sentiment, cross-stock sentiment influence, and distinguishing between generic vs. stock-specific sentiment—which may significantly impact model performance. Furthermore, a major limitation in existing research is the lack of transparency in dataset construction. Many studies use small, proprietary, or poorly documented datasets, making replication difficult and leaving uncertainty regarding data representativeness.
+
+This study addresses these gaps by:
+✅ Constructing a large-scale, openly described dataset containing thousands of financial posts across multiple stocks and timestamps, ensuring robust and reproducible analysis.
+✅ Investigating whether engagement-weighted sentiment scores improve stock price forecasting.
+✅ Examining cross-stock sentiment influence (e.g., whether sentiment about Nvidia impacts Google stock prices).
+✅ Comparing generic (#investing) vs. stock-specific ($GOOGL) sentiment signals in reinforcement learning models.
+✅ Analyzing how sentiment volatility correlates with stock price fluctuations.
+
+To achieve this, we compile a large-scale dataset of financial Twitter posts from 01-01-2020 to 01-01-2025, covering multiple stock-related hashtags (#btc, $NVDA, $GOOGL, $AMZN, $AAPL, $MSFT, $TSLA, $SPX, and #investing). This dataset spans thousands of posts across all hours of the day, enabling an in-depth analysis of intraday sentiment shifts. We extract sentiment scores using the DeepSeek model and integrate them into a Double Deep Q-Network (DDQN) framework for stock price forecasting.
+
+To evaluate model effectiveness, we assess cumulative profit and win rate as primary performance metrics. Additionally, we apply Granger causality tests to determine whether sentiment serves as a leading or lagging indicator and use SHAP analysis to quantify the contribution of different sentiment features to model predictions.
+
+The remainder of this paper is structured as follows: Section 2 reviews the latest research on sentiment analysis and stock market forecasting. Section 3 presents the proposed methodology, including data preprocessing, sentiment feature engineering, and reinforcement learning setup. Section 4 reports experimental results, while Section 5 discusses key findings and future research directions.
+
+2. Related Works
+
+Former studies highlight the challenge of stock market prediction. Numerous of AI methods - machine learning algorithms (KNN, RF, XGBoost), deep learning algorithms (LSTM, RNN, GRU), and reinforcement learning (DQN, A2C) - were utilized along different datasets (sentiment, technical, and fundamental data), providing results better than naive benchmarks, but still leaving room for improvement. The most difficult thing to predict are the exact stock values or volatility, then the trend classification (up,down,neutral).
+
+Sentiment is a popular indicator in stock market prediction especially combined with technical and fundamental indicators. In [1] they utilized StockTwits sentiment data with technical data and raw price data to a three-phase experiment. Their findings highlighted that integrating sentiment signals significantly improved reward moderation and profitability of NVIDIA stock market. Their methodology emphasizes how DDQN architectures can benefit from progressively engineered feature states.
+
+In [2], the authors applied a Double Deep Q-Network (DDQN) to develop a trading agent capable of intelligently making buy, sell, or hold decisions to maximize returns. They evaluated four progressively complex models by incrementally expanding the state representation to include 1-day and 5-day returns of the S&P 500, Russell 2000, WTI Crude Oil, and Gold. The models were tested under varying market conditions, including with and without trading costs, and in pre- and post-crisis periods. The DDQN agent consistently outperformed a traditional long-and-hold benchmark in key metrics such as Net Asset Value (NAV) and Sharpe Ratio, achieving up to 57% directional accuracy, significantly above the random baseline of approximately 33%. **NormalizedReturns, scaled and EWMA**
+
+In [3], the authors introduce SA-TrellisNet, a deep learning model that enhances stock market index prediction by incorporating news sentiment into the forecasting process. The model extracts sentiment scores from financial news using a CNN-LSTM architecture, generating a sentiment index that reflects public and market mood. A key innovation is the sentiment attention mechanism, which assigns dynamic weights to input features based on their emotional relevance. This allows the model to emphasize price movements most influenced by market sentiment. The sentiment-enriched data is then fed into TrellisNet, a time-series network optimized for capturing long-term trends. Tested across seven global indices, SA-TrellisNet outperformed several state-of-the-art models, demonstrating that integrating emotional context from news can significantly improve predictive accuracy. 
+
+In [4], the authors present a hybrid financial advisory system that combines social media sentiment analysis, price forecasting, and risk assessment to enhance stock market predictions. The model uses textual data from Reddit along with traditional stock price data to deliver both predicted prices and a risk level associated with those predictions.
+
+The system employs a two-part architecture:
+- LSTM predicts short-term stock prices with an accuracy of 76.2%.
+- XGBoost, enhanced through PCA-based feature selection and parameter tuning, classifies future stock trends with 94.1% accuracy, achieving strong F1 scores across both rising and falling price categories.
+
+A novel 4-level risk analysis framework was introduced based on the alignment or conflict between the LSTM and XGBoost predictions—offering investors a confidence measure with each forecast. This risk-aware output fills a major gap in existing financial models.
+A 4-level risk scale was created based on agreement or disagreement between XGBoost and LSTM:
+
+- Level 1 (low risk): Both models predict price rise
+
+- Level 4 (high risk): Both models predict price drop
+
+- Mixed signals fall into Level 2 or 3
+
+This hybrid decision framework added a confidence indicator for each prediction. The study emphasizes that sentiment extracted from Reddit—despite potential noise—can reliably enhance market insight when combined with traditional metrics. It also highlights the model’s adaptability, suggesting potential applications in other financial domains like real estate. This work marks a significant advancement in NLP-based stock forecasting by merging predictive accuracy with practical risk evaluation—offering a more complete tool for modern investment decision-making.
+
+In [5], the authors introduce a market-based approach to financial sentiment analysis, challenging traditional NLP models by fine-tuning language models using actual market reactions to tweets rather than subjective sentiment labels. Their framework focuses on Bitcoin's short-term market movement prediction, integrating market-derived labeling, context-aware prompt tuning, and actionable signal generation.
+
+Instead of relying on human-labeled sentiment, the model uses market-derived labels—defining tweet sentiment based on subsequent price movement and profit/loss outcomes.
+
+Fine-tuned models incorporating market context (e.g., previous trend, RSI, ROC) achieved an F1-score of 80.3%, significantly outperforming sentiment baselines like FinBERT (16.7%) and CryptoBERT (25.2%).
+
+The CA model (Context-Aware) demonstrated strong tweet classification accuracy, and when aggregated into daily trading signals, enabled robust and consistent trading performance.
+
+Backtested over bullish, bearish, and neutral market regimes, the CA model’s TBL strategies (Trend-Based Labeling) achieved:
+
+- Sharpe ratio up to 5.07 in bullish markets
+- 3.73 in neutral markets
+- 4.70 in bearish markets
+
+The approach avoids high-risk misclassifications (e.g., predicting bullish as bearish), favoring conservative neutrality in ambiguous situations—a key strength in volatile markets. This study highlights a paradigm shift in financial forecasting: language models, when trained on market-responsive data and enriched with contextual prompts, can evolve from passive sentiment interpreters to active signal generators. The authors propose future explorations in:
+
+- LLM-driven financial chatbots for advisory services,
+
+- RAG-enabled interactive financial reports, and
+
+- Personalized investment strategies using novel social and technical features.
+
+The findings underscore the transformative role that context-rich NLP can play in trading and decision-making systems—provided they are evaluated under real-world conditions including market volatility, transaction costs, and investor constraints.
+
+In [6], the authors explore how prompt design impacts the ability of Large Language Models (LLMs) to perform context-aware sentiment analysis on the Directors’ Review sections of company financial reports. The study evaluates zero-shot, few-shot, and fine-tuned setups using four LLMs: ChatGPT, Bing Chat, Cohere, and BARD, as well as a fine-tuned GPT-2 model.
+
+🧠 Key Contributions
+Prompts were designed to extract local and global sentiment, supporting keywords, company names, and industry sectors.
+
+Models were tested in both zero-shot (no examples) and few-shot (with synthetic examples) settings.
+
+Evaluations were benchmarked against human-labeled sentiment to assess real-world alignment.
+
+🔍 Results at a Glance
+In the zero-shot setting, all LLMs struggled with global sentiment, returning vague responses like “uncertain”.
+
+BARD stood out with the most financially accurate and nuanced language, offering terms like “cautiously optimistic” and precise sector classifications.
+
+In the few-shot setting, models delivered more nuanced and contextualized sentiment outputs, outperforming their zero-shot counterparts.
+
+Fine-tuned GPT-2 achieved the closest match to global sentiment evaluations but lacked context separation (e.g., it summarized the full report rather than distinguishing sections).
+
+Cohere failed to generate responses in the few-shot setting, indicating limitations in its few-shot capability.
+
+💡 Conclusion & Implications
+The study demonstrates that LLMs can feasibly conduct financial sentiment analysis, but prompt design is critical for success.
+
+Few-shot prompts significantly improve output quality by offering contextual grounding.
+
+Output variability in style and length across models can affect readability and practical use in financial settings.
+
+The paper recommends future work in:
+
+Better prompt engineering for precision and scope,
+
+Exploring LLM-based assistants for finance,
+
+Enhancing interpretability and trust through user-guided responses and context control.
+
+📌 Takeaway
+This work highlights how context-rich prompting can unlock the analytical potential of LLMs in finance — but only with careful prompt design and continued model refinement. It's a promising step toward automated, human-aligned financial report interpretation.
+
+In [7], the authors introduce Senti-DD, a novel sentiment lexicon construction framework tailored for the financial domain, addressing the limitation of traditional sentiment lexicons that ignore context and directionality. This method accounts for how sentiment shifts depending on whether financial indicators are increasing or decreasing (e.g., “profit” being positive in “profit increased” but negative in “profit decreased”).
+
+🧠 Core Contributions
+Senti-DD Lexicon: Automatically built by calculating Pointwise Mutual Information (PMI) between terms and directional indicators (e.g., up, down).
+
+Each entry in the lexicon is a pair: a directional word + direction-dependent word.
+
+Integrated as a plug-in extension to the well-known Loughran-McDonald Word List.
+
+📊 Experimental Results
+Outperformed traditional lexicons like SentiWordNet, TextBlob, VADER, and LM across four financial datasets.
+
+Achieved significantly higher F1-scores, especially in correctly classifying negative sentiment, where directionality plays a crucial role.
+
+Corrected misclassifications of sentences that were previously labeled neutral due to the absence of traditional polarity words.
+
+Qualitative evaluation confirmed the lexicon’s ability to extract meaningful financial sentiment words (e.g., revenue, investment, cost) and assign the correct polarity based on directional context.
+
+🔬 Case Example
+“Profit for the period was EUR 10.9 million, down from EUR 14.3 million.”
+
+Loughran-McDonald alone misclassified this as neutral.
+
+LM+Senti-DD correctly identified it as negative, thanks to the “profit + down” pairing.
+
+🧩 Conclusion & Future Directions
+The study demonstrates that context-aware lexicons, like Senti-DD, can dramatically improve financial sentiment classification. It provides an efficient and scalable alternative to manual annotation by leveraging patterns in domain-specific corpora.
+
+The authors propose expanding this framework to other domains such as consumer reviews, where direction-sensitive sentiment (e.g., definition + high = positive, definition + low = negative) also applies. They also highlight the importance of larger labeled datasets and more analyst-style documents to further refine sentiment detection.
+
+In [8] The study compares a variety of models for forecasting the Dow Jones Industrial Average (DJIA) from 2008 to 2020:
+
+Baseline: ARIMA (classical time-series model)
+
+Deep learning models: GRU, CNN, LSTM
+
+Hybrid models: Combined historical prices with sentiment scores extracted using:
+
+SentiWordNet
+
+FinBERT (a finance-specific transformer model)
+
+Data was split in an 80:20 ratio (train:test), with news headlines from the Wall Street Journal used as the textual input. The GRU + FinBERT setup clearly outperformed others, validating the correlation between headline sentiment and short-term stock movement.
+
+📌 Conclusions & Implications
+The study confirms that sentiment extracted from financial news contributes meaningfully to stock price prediction.
+
+FinBERT, trained specifically for financial language, delivered the most effective sentiment scores, improving accuracy over general-purpose models.
+
+Despite modest gains, NLP-enhanced models offer a computational trade-off: useful when higher prediction precision is needed or when company-specific headlines are available.
+
+🔮 Limitations & Future Work
+Headline relevance: Not all top headlines influence the market, leading to signal noise.
+
+Index-level prediction: DJIA isn’t tied to individual companies; firm-specific forecasting could yield better accuracy.
+
+Future directions:
+
+Use of GANs with FinBERT for synthetic data generation.
+
+Focused news filtering (e.g., from influential sources).
+
+Incorporating public reactions (comments, engagement, emotional tone).
+
+In [9] they introduces a sophisticated AI-based trading strategy for cryptocurrency markets, leveraging:
+
+XGBoost for feature selection
+
+Double Deep Q-Networks (DDQN) for reinforcement learning
+
+Deep neural network layers: LSTM, BiLSTM, and GRU
+
+The system is trained and tested on Bitcoin and Ethereum from July 2021 to March 2023, a period characterized by extreme market volatility. The core objective was to improve decision-making in dynamic markets and protect traders from large losses while maintaining profit potential.
+
+📊 Key Results
+XGBoost identified the 10 most predictive features (including blockchain-specific metrics), significantly improving performance.
+
+Deep networks with XGBoost-enhanced inputs (especially GRU+XG and BiLSTM+XG) outperformed both traditional models and Buy-and-Hold strategies.
+
+Achieved the highest Sharpe ratios, profitability, and risk-adjusted returns, particularly in low-volatility market phases.
+
+Wilcoxon tests confirmed statistical superiority of these models with p-values < 0.05 across both crypto assets.
+
+Notably, while high returns were observed, the strategy also carried higher risk, making it more appropriate for risk-tolerant investors.
+
+💡 Strategic Insights
+Blockchain variables (like transaction volume and hash rate) proved essential, demonstrating the unique nature of crypto markets compared to equities.
+
+Model robustness was demonstrated even during drawdowns, with recovery and profitability following initial losses.
+
+Active trading strategies underperformed during strong bull runs, suggesting a hybrid passive-active framework might offer better long-term adaptability.
+
+🔮 Future Directions
+The authors recommend:
+
+Hybrid strategies: Combine passive and active approaches based on market turning points.
+
+Portfolio optimization: Train models jointly on multiple assets (e.g., Bitcoin + Ethereum) and optimize using methods like Markowitz or Black-Litterman.
+
+Risk control mechanisms: Implement profit/loss limits to enhance applicability for risk-averse investors.
+
+Cross-asset applications: Expand the framework to include traditional assets like stocks and gold for diversification.
+
+📌 Final Takeaway
+This research showcases a powerful AI-based trading system that intelligently integrates feature selection, deep learning, and reinforcement learning. It offers a practical and data-driven solution to navigating the high-risk crypto market with better foresight and adaptability—particularly for informed or risk-tolerant investors.
+
+In [10] proposes a novel market efficiency measure for cryptocurrencies using public social media data—specifically, Twitter. By analyzing more than 53 million tweets and applying NLP-based topic modeling and sentiment techniques, the authors introduce a machine learning framework that tests the Efficient Market Hypothesis (EMH) from a public information perspective.
+
+Rather than relying on traditional autocorrelation or time-series memory (e.g., Hurst exponent), this method evaluates whether crypto prices react predictably to social media activity—a modern proxy for public information flow.
+
+🔍 Key Methodology
+Text Processing Techniques:
+
+Latent Dirichlet Allocation (LDA)
+
+Term Frequency–Inverse Document Frequency (TF-IDF)
+
+Classifier Training:
+
+Four variations using “pure” and “engagement-weighted” keyword vectors
+
+Prediction Target:
+
+Short-term returns and excess returns
+
+Efficiency Definition:
+
+Ability of classifiers (trained on social media data) to correctly predict price movements
+
+📊 Main Findings
+📈 Market-Level Observations
+50% average prediction accuracy → Suggests partial informational efficiency
+
+Higher efficiency during exogenous crises (COVID-19, Ukraine War)
+
+Lower efficiency during endogenous crises (2018 Crypto Bust)
+
+🪙 Coin-Specific Insights
+Efficiency rises in the first 6 months after a coin's ICO, likely due to:
+
+Hype and speculation
+
+Scarce structured information
+
+High responsiveness to social sentiment
+
+After 6 months, efficiency drops as the investor base matures and stabilizes
+
+🏷️ Efficiency by Category
+PoW, DeFi, mineable, and payment coins:
+
+Decreased efficiency during 2018 crash
+
+Increased efficiency during COVID-19 and Ukraine War
+
+Gaming/play-to-earn coins:
+
+Showed the most erratic behavior during the Ukraine crisis
+
+Dogecoin: Highly aligned with public sentiment during COVID-19
+
+🔁 Comparison with Hurst Exponent
+Correlation between the new social media-based efficiency score and Hurst exponent was < 0.25, confirming that this approach captures distinct informational content.
+
+📌 Conclusions & Implications
+Public information, as captured via Twitter, offers meaningful predictive power for crypto prices.
+
+Although classifiers show limited accuracy (≈50%), they do not invalidate EMH, as forecasts aren’t consistently profitable.
+
+The method offers a new lens to analyze crypto markets, especially useful for:
+
+Regulators monitoring manipulation during crisis periods
+
+Investors identifying periods of higher informational responsiveness (e.g., post-ICO phases)
+
+🔮 Future Research Suggestions
+Examine coin-level efficiency patterns to identify consistently predictable vs. unpredictable assets.
+
+Apply bubble detection tools (e.g., GSADF) to assess how efficiency shifts during speculative periods.
+
+Explore multimodal data sources (e.g., Reddit, financial news, Telegram) to enrich the public information signal.
+
+In [11] they introduces a novel sentiment-aware ensemble reinforcement learning framework for stock trading. The approach integrates daily financial sentiment analysis—derived from Wall Street Journal articles—with a deep reinforcement learning (DRL) ensemble, dynamically switching between agents based on market sentiment rather than at fixed intervals. The primary goal is to better capture real-time market conditions by adapting strategies in response to qualitative sentiment cues and quantitative stock data.
+
+Methodology & Evaluation:
+
+The model is trained on seven years of historical stock data (2010–2016) and tested over a two-year out-of-sample period (2017–2019).
+
+Sentiment scores are computed using a threshold to trigger switching among agents (DDPG, PPO, A2C).
+
+Performance is benchmarked against:
+
+A traditional fixed-period ensemble strategy
+
+Single-agent DRL models
+
+The Dow Jones Industrial Average (DJIA)
+
+Key Findings:
+
+The Sentiment-Ensemble strategy significantly outperforms all baselines, achieving over 40% cumulative return, with an annualized return of 18.36%, the highest Sharpe and Sortino ratios, and the lowest max drawdown.
+
+Traditional ensemble switching methods (fixed-period) are shown to be less effective compared to dynamic, sentiment-based switching.
+
+Even though the agent pool remains the same, incorporating sentiment awareness yields superior adaptability and risk-adjusted returns.
+
+Conclusions & Implications:
+
+This research pioneers the integration of sentiment analysis into DRL ensemble strategies for stock trading. The results demonstrate that real-time sentiment-driven switching enhances profitability and robustness. Due to its efficiency, the method is promising for deployment in live trading systems. Future work may explore integrating large language models for richer sentiment extraction or optimizing the switching threshold via a meta-learning controller.
+
+In [12] they investigates how sentiment derived from social media platforms—Twitter, Reddit, and StockTwits—correlates with stock market volatility and price behavior. Leveraging natural language processing (NLP), the research analyzes public sentiment during key events such as the GameStop short squeeze, Bitcoin volatility, COVID-19 market turmoil, and Elon Musk’s influence on Tesla. The findings offer compelling evidence that social media sentiment can serve as a predictive signal for price movements and volatility, particularly during periods of heightened market uncertainty.
+
+🔍 Key Findings
+GameStop (GME) Short Squeeze
+
+Strong positive correlation between surging sentiment on Reddit and GME’s stock price (from $20 to over $400).
+
+Showcased the power of coordinated retail investor sentiment in driving extreme volatility.
+
+Bitcoin & Cryptocurrency Trends
+
+Twitter sentiment closely aligned with Bitcoin’s price swings.
+
+Regression analysis confirmed sentiment as a strong predictor of crypto volatility.
+
+COVID-19 Crisis
+
+High negative sentiment correlated with spikes in volatility (e.g., VIX).
+
+Demonstrated the real-time sensitivity of markets to global crises reflected in public sentiment.
+
+Elon Musk’s Influence on Tesla
+
+Musk’s tweets strongly correlated with Tesla’s stock volatility and price shifts.
+
+Underlined the role of individual influencers in shaping investor reactions via sentiment.
+
+🧠 Extended Analysis and Market Behavior
+Immediate Reactions: Markets react rapidly to sentiment spikes, amplified by algorithmic and high-frequency trading.
+
+Sustained Impact: Positive sentiment can create momentum and feedback loops, while negative sentiment can trigger prolonged downturns.
+
+Contextual Factors: Economic news, regulations, and event-driven triggers (e.g., pandemics, wars) interact with sentiment, influencing its strength and direction.
+
+Echo Chamber Effect: Social media often repeats traditional news, leading investors to misinterpret repeated signals as new, exacerbating volatility.
+
+📊 Investor Implications
+Predictive Tool: Social media sentiment often precedes market movements, making it a powerful early-warning system.
+
+Strategy Design:
+
+Trend-following and contrarian strategies can benefit from real-time sentiment data.
+
+Volatility forecasting and risk management improve when sentiment is incorporated.
+
+Behavioral Insight: Sentiment analysis reveals herd behavior and market psychology, helping investors detect bubbles or overreactions.
+
+⚠️ Limitations and Considerations
+Sentiment analysis tools may misread nuance (e.g., sarcasm, irony).
+
+Misinformation or manipulation on platforms can distort signals.
+
+Integrating traditional financial metrics with sentiment data ensures more reliable insights.
+
+🧾 Conclusion
+Social media sentiment is now a crucial factor in stock market behavior, offering valuable predictive insights—especially in volatile or sentiment-driven markets like crypto or meme stocks. While not without limitations, sentiment analysis can significantly enhance decision-making, forecasting, and risk mitigation when combined with traditional indicators. As financial markets evolve, adapting to the influence of digital sentiment is not optional—it’s essential.
+
+
+
+In [13] they explores how social media sentiment and market volatility interact across major asset classes, focusing on the directionality of shocks and how these relationships evolve during economic crises. It introduces a robust empirical framework to measure connectedness, using VIX and other volatility indices alongside sentiment measures extracted from social media.
+
+🔍 Key Findings:
+Volatility Drives Sentiment
+Across all asset classes—stocks, bonds, oil, gold, FX—volatility indices (e.g., VIX) are net transmitters of shocks, while sentiment indices are net receivers. This indicates that investor sentiment is often a reactive force, particularly influenced by movements in volatility.
+
+Crisis Period Dynamics
+During crises like the Global Financial Crisis, Brexit, US-China trade war, and COVID-19, the interconnectedness between volatility and sentiment spikes significantly. Notably, social media sentiment transitions to a net transmitter, showing that investor chatter can exacerbate market swings in turbulent times.
+
+Echo Chamber Effect
+The study confirms that social media often mirrors traditional news, and during high-stress periods, this redundant information is misinterpreted as new, amplifying reactions. While social media rarely introduces original signals, it reinforces volatility by circulating pre-existing ones.
+
+Volatility vs. Sentiment: Role Reversal in Crises
+Assets like OilSentiment and StockSentiment shift from passive to active roles during events like the Russia-Ukraine conflict or pandemics, suggesting that market sentiment can feed back into volatility under specific geopolitical or economic conditions.
+
+Robustness to Fundamentals
+Controlling for macroeconomic indicators (e.g., TED spread, term spread) did not change the main findings—confirming that the volatility-to-sentiment spillover is not purely driven by business cycles.
+
+💡 Implications:
+For investors: Avoid over-relying on social media signals in volatile markets, as repeated news may not offer new information.
+
+For regulators: Monitor social platforms for potential amplification of fear and uncertainty, especially in times of crisis.
+
+For scholars: Consider integrating emotional valence (fear, anger, joy) and source credibility in future sentiment-spillover models.
+
+🔬 Future Directions:
+Develop models using core emotional categories to refine understanding of how specific investor emotions affect volatility.
+
+Explore heterogeneous investor behavior using labeled social media datasets.
+
+Investigate real-time policy responses to social sentiment spikes in digital-first markets.
+
+In [14] They evaluates whether sentiment extracted from financial headlines, news stories, and Twitter posts can serve as predictive signals for FTSE100 market volatility and returns. A web-scraped dataset was developed for real-time sentiment tracking, combining natural language processing (NLP) techniques—including VADER and Latent Dirichlet Allocation (LDA)—with correlation, Granger causality testing, and classification models.
+
+Key findings include:
+
+Headlines sentiment showed a moderate negative correlation (r = –0.45) with same-day returns, suggesting that increased negative sentiment relates to market decline.
+
+Tweet sentiment, especially from cashtag-labeled posts, showed a strong negative correlation (r = –0.7) with next-day volatility, supporting the leverage effect where bad news increases volatility.
+
+Granger causality tests found no significant causality from sentiment to market movements, though reverse causality was detected, with market losses triggering negative sentiment.
+
+Topic modeling using LDA showed promising predictive performance. A logistic regression classifier achieved 65% accuracy in predicting the direction of next-day volatility based on news-derived topics.
+
+Despite challenges with noise in social media data and the need for more scalable topic modeling architectures, the study underscores the value of sentiment and topic signals in forecasting market behavior—especially volatility.
+
+ 
+
+Most:
+
+[1]. George Papageorgiou, Dimitrios Gkaimanis, and Christos Tjortjis. Enhancing stock
+market forecasts with double deep q-network in volatile stock market environments ✅
+
+[2]. Frensi Zejnullahu APPLICATIONS OF REINFORCEMENT LEARNING IN FINANCE ✅ 
+
+[3]. Jie Liu News-driven stock market index prediction based on trellis network and sentiment attention mechanism ✅
+
+[4]. Abidden A Novel NLP-based Stock Market Price Prediction and Risk Analysis Framework ✅
+
+[5]. Moradi Kamali Market-Derived Financial Sentiment Analysis: Context-Aware Language Models for Crypto Forecasting ✅ ✅
+
+[7]. Park Automatic Construction of Context-Aware Sentiment Lexicon in the Financial Domain Using Direction-Dependent Words ✅
+
+[8]. Puh Babac Predicting stock market using natural language processing ✅
+
+[9]. Ghadari Designing a cryptocurrency trading system with deep reinforcement learning utilizing LSTM neural networks and XGBoost feature selection ✅
+
+[10]. Polyzos Efficient Market Hypothesis on the blockchain: A social-media-based index for cryptocurrency efficiency ✅ 
+
+[11]. Andrew Ye Learning the Market: Sentiment-Based Ensemble Trading Agents ✅
+
+[12]. Docas Akinleye Correlating Social Media Sentiment with Stock Market Volatility Exploring relationships between sentiment and market fluctuations ✅
+
+[13]. Ni Yang Spillover between investor sentiment and volatility: The role of social media
+
+[14]. Deveikyte A sentiment analysis approach to the prediction of market volatility ✅ ??
+
+Irrelevant:
+
+-  Ahmed Leveraging Large Language Models and Prompt Settings for Context-Aware Financial Sentiment Analysis
+
+- Xuemei Li STOCK MARKET PREDICTION USING REINFORCEMENT LEARNING WITH SENTIMENT ANALYSIS ✅ ??s
+
+- Tong Li Understanding the role of social media sentiment in identifying irrational herding behavior in the stock market ✅ ??
+
+- Qing Liu Methods for aggregating investor sentiment from social media ✅ ??
+
+- Francesco Audrino The impact of sentiment and attention measures on stock market volatility ✅ ??
+
+- Ashwin Joshi Predicting Stocks Changes Using News Sentiment Analysis ✅ ??
+
+- de Oliveira Carosia Using Sentiment and Technical Analysis to Predict Bitcoin with Machine Learning ✅ ??
+
+- Yu S&P 500 Trend Prediction ✅ ??
+
+- Darvishan Investigating the Impact of Investor Sentiment and Volatility on Investment Behavior in the Gold Market ✅ ??
+
+Reject:
+
+- Alamgir Labib Awad Stock Market Prediction Using Deep Reinforcement Learning
+
+- Hae Sun Jung. Deep-learning-based stock market
+prediction incorporating esg sentiment and technical indicators
+
+- Thomas Joseph Natural Language Processing (NLP) for Sentiment Analysis in Social Media
+
+- Junaid Maqbool Stock Prediction by Integrating Sentiment Scores of Financial News and MLP-Regressor: A Machine Learning Approach
+
+- Kitrac Sentiment trading with large language models 
+
+- Aditya Singh Rajpurohit Data Preprocessing for Stock Price Prediction Using LSTM and Sentiment Analysis
+
+- Olamilekan Shobayo Innovative Sentiment Analysis and Prediction of Stock Price Using FinBERT, GPT-4 and Logistic Regression: A Data-Driven Approach
+
+- Serdar Arlsan Bitcoin Price Prediction Using Sentiment Analysis and Empirical Mode Decomposition
+
+- Thanga Mariappan A Forecasting Approach to Cryptocurrency Price Index Using Reinforcement Learning
+
+- Shahbazi Improving the Cryptocurrency Price Prediction Performance Based on Reinforcement Learning
+
+- Muminov Enhanced Bitcoin Price Direction Forecasting With DQN
+
+- Alex Fuster Using Machine Learning Models to Predict S&P500 Price
+ Level and Spread Direction
+
+- Huotari Deep Reinforcement Learning Agent for S&P 500 Stock Selection
+
+- Bai The Spillover Effects of Market Sentiments on Global Stock Market Volatility: A Multi-Country GJR-GARCH-MIDAS Approach
+
+- Gao Effects of investor sentiment on stock volatility: new evidences from multi-source data in China’s green stock markets
+
+- Akhila Mamillapalli GRUvader: Sentiment-Informed Stock Market Prediction
+
+Market-Derived Labeling
+
+POMYSŁ: Nadanie wpisom na twitterze wag (jeśli giełda w danym dniu wzrośnie i mamy w tym dniu dwa wpisy jeden o sentymencie negatywnym i drugi o sentymencie pozytywnym to waga tego drugiego powinna być wyższa od poprzedniego wpisu). Na koniec sprawdzenie co łączy wpisy o najwyższych wagach.
+
+POMYSŁ2: SPRAWDZENIE WPŁYWU SENTYMENTU NA ZMIENNOŚĆ GIEŁDY I JAK DŁUGO TRWA WPŁYW POSZCZEGÓLNYCH WPISÓW
+
+4.27PLN/1EUR 04.05.2025
+Portugalia 49EUR/dzień dieta 150 EUR dzień nocleg
+Włochy 53EUR/dzień dieta 192 EUR nocleg
+ECAI main conference Student non member 440 EUR
+Social Dinner student non member 100 EUR
+ECMLPKDD 25 – 500 EUR
+
+ECMLPKDD 2025 15.09.2025 – 20.09.2025
+LOT Warszwa - Lizbona 2327.61 PLN 5DNI 
+Lizbona – Porto Pociąg2x  298 PLN
+WizzAIR Warszawa – Porto  1818 PLN 4DNI
+ECAI 2025 25.10.2025 – 31.10.2025
+LOT Warszawa – Rzym 1430.54 PLN 6DNI
+Rzym – Bolonia Pociąg 2x 470 PLN
+WizzAIR Kraków – Bolonia 608 PLN 7DNI
