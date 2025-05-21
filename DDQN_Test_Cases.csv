@@ -1,2 +1,2 @@
 Name,Dataset,State,Sentiment Type
-TestCase1,BTC-USD,SEN_Above_Rolling RSI_bullish Volatility_Low,bitcoin
+TestCase4,BTC-USD,Close_Increasing,cryptobert_bitcoin_sentiment
