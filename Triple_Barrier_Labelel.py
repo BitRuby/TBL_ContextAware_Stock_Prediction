@@ -132,7 +132,7 @@ class Triple_Barrier_Labelel():
                 prev_label = LABEL_BEARISH
         return labels
     
-    def get_daily_volatility(self, df, span=14):
+    def get_daily_volatility(self, df, span=14, std_coef=(-1.0, 0.5)):
         """
         Calculates the daily volatility of a stock based on the percentage change in price relative to the previous day.
 
@@ -143,7 +143,12 @@ class Triple_Barrier_Labelel():
         Parameters:
             df (pd.DataFrame): A DataFrame containing stock price data. It should have a 'close' column representing the closing prices.
             span (int, optional): The span for the exponentially weighted moving standard deviation. Default is 14 days.
-
+            std_coef (Tuple[float, float]):
+                Threshold multipliers relative to rolling volatility mean:
+                    - Negative coef = lower bound (bullish if below this)
+                    - Positive coef = upper bound (bearish if above this)
+                Default (-1.0, 0.5).
+    
         Returns:
             pd.Series: A Series containing the daily volatility for each day, based on the exponentially weighted moving standard deviation 
                        of the daily returns.
@@ -158,13 +163,24 @@ class Triple_Barrier_Labelel():
             - The `span` parameter controls the smoothing of the volatility estimate. A smaller span gives more weight to recent data.
             - The method uses an exponentially weighted moving average (EWMA) to compute the standard deviation of returns, which gives more 
               weight to recent observations.
-
         """
         prev_day_start = df.close.index.searchsorted(df.close.index - pd.Timedelta(days=1))
         prev_day_start = prev_day_start[prev_day_start > 0]
         prev_day_start = pd.Series(df.close.index[prev_day_start - 1], index=df.close.index[df.close.shape[0] - prev_day_start.shape[0]:])
         daily_returns = df.close.loc[prev_day_start.index] / df.close.loc[prev_day_start.values].values - 1
-        return daily_returns.ewm(span=span).std()
+        vol = daily_returns.ewm(span=span).std()
+        
+        rolling_mean = vol.rolling(window=span).mean()
+        rolling_std = vol.rolling(window=span).std()
+
+        lower = rolling_mean + std_coef[0] * rolling_std
+        upper = rolling_mean + std_coef[1] * rolling_std
+        
+        description = pd.Series(index=vol.index, dtype="object")
+        description[vol > upper] = "bearish"
+        description[vol < lower] = "bullish"
+        description[(vol <= upper) & (vol >= lower)] = "neutral"
+        return vol, description
     
     def map_data(self, labels, day, key):
         day = pd.to_datetime(day)
@@ -224,7 +240,7 @@ class Triple_Barrier_Labelel():
 
         """
         copy = df.copy()
-        copy["volatility"] = self.get_daily_volatility(copy, vol)
+        copy["volatility"], copy['volatility_label'] = self.get_daily_volatility(copy, vol)
         labels = self.assign_labels(copy, fu, fl, vt)
         copy['label'] = copy.apply(lambda x: self.map_data(labels, x.name, 'label'), axis=1)
         copy['lower_barriers'] = copy.apply(lambda x: self.map_data(labels, x.name, 'lower_barrier'), axis=1)      

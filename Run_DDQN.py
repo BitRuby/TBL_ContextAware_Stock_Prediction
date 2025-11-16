@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[60]:
+# In[1]:
 
 
 import pandas as pd
@@ -61,7 +61,7 @@ TWEETS_RANDOM_SEED = 42
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 
-# In[61]:
+# In[2]:
 
 
 class Agent():
@@ -144,7 +144,7 @@ class Agent():
         gc.collect()
 
 
-# In[62]:
+# In[3]:
 
 
 class Environment():
@@ -211,7 +211,7 @@ class Environment():
         return state_only
 
 
-# In[63]:
+# In[4]:
 
 
 class DQNAlgorithm():
@@ -288,7 +288,7 @@ class DQNAlgorithm():
         return self.best_model
 
 
-# In[64]:
+# In[5]:
 
 
 def process_dataset_with_sentiment(labeled_df, tweets_id, market):
@@ -302,7 +302,7 @@ def process_dataset_with_sentiment(labeled_df, tweets_id, market):
         2: "Bullish"
     }       
     model = AutoModelForSequenceClassification.from_pretrained(
-        "btcusd_model",
+        "Models/btcusd_model",
         trust_remote_code=True
     )
     tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
@@ -356,7 +356,7 @@ def process_dataset_with_sentiment(labeled_df, tweets_id, market):
     return dataset
 
 
-# In[65]:
+# In[6]:
 
 
 def evaluate_model(original_data, scaled_data, mod, log = False, market = "BTC"):
@@ -438,7 +438,7 @@ def evaluate_model(original_data, scaled_data, mod, log = False, market = "BTC")
     }
 
 
-# In[66]:
+# In[7]:
 
 
 def get_Tweets_Id(market):
@@ -470,9 +470,11 @@ def extract_text(s):
 # In[ ]:
 
 
-cases = pd.read_csv("DDQN_Cases_2.csv")
+cases = pd.read_csv("TestCases/DDQN_Test_Cases.csv")
 for test_id in range(len(cases)):
-    path_name = f"{extract_text(cases['Market'][test_id]).lower()}_processed_data.csv"
+    if test_id == 6:
+        break
+    path_name = f"Datasets/{extract_text(cases['Market'][test_id]).lower()}_processed_data.csv"
     if os.path.exists(path_name):
         merged_data = pd.read_csv(path_name)
     else:
@@ -582,5 +584,11 @@ for test_id in range(len(cases)):
     model_returns_test = evaluate_model(test_y, test_scaled, best_model, True, cases['Market'][test_id])
     columns = ["TestCaseName", "Market", "MarketRegime", "Parameters", "Positive Rewards", "Wins", "Sum PnL", "Sharpe Ratio"]
     test_conc = [cases["TestCaseName"][test_id], cases["Market"][test_id], cases["MarketRegime"][test_id], cases["Parameters"][test_id], model_returns_test["Positive Rewards"], model_returns_test["Wins"], model_returns_test["Sum PnL"], model_returns_test["Sharpe Ratio"]]
-    pd.DataFrame([test_conc], columns=columns).to_csv(f"DDQN_Test_Results_2.csv", mode="a", index=False, header=not os.path.exists("DDQN_Test_Results_2.csv"))
+    pd.DataFrame([test_conc], columns=columns).to_csv(f"TestResults/DDQN_Test_Results.csv", mode="a", index=False, header=not os.path.exists("DDQN_Test_Results_2.csv"))
+
+
+# In[ ]:
+
+
+
 
