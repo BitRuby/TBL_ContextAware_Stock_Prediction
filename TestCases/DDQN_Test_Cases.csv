@@ -1,49 +1,25 @@
-﻿TestCaseName,Market,MarketRegime,Parameters
-BtcTest1,BTC-USD,All,Volatility
-BtcTest2,BTC-USD,WarOnUkraine,Volatility
-BtcTest3,BTC-USD,All,"Volatility,TechnicalIndicators"
-BtcTest4,BTC-USD,WarOnUkraine,"Volatility,TechnicalIndicators"
-BtcTest5,BTC-USD,All,"Volatility,TechnicalIndicators,Sentiment"
-BtcTest6,BTC-USD,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-NvidiaTest1,NVDA,All,Volatility
-NvidiaTest2,NVDA,WarOnUkraine,Volatility
-NvidiaTest3,NVDA,All,"Volatility,TechnicalIndicators"
-NvidiaTest4,NVDA,WarOnUkraine,"Volatility,TechnicalIndicators"
-NvidiaTest5,NVDA,All,"Volatility,TechnicalIndicators,Sentiment"
-NvidiaTest6,NVDA,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-GoogleTest1,GOOGL,All,Volatility
-GoogleTest2,GOOGL,WarOnUkraine,Volatility
-GoogleTest3,GOOGL,All,"Volatility,TechnicalIndicators"
-GoogleTest4,GOOGL,WarOnUkraine,"Volatility,TechnicalIndicators"
-GoogleTest5,GOOGL,All,"Volatility,TechnicalIndicators,Sentiment"
-GoogleTest6,GOOGL,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-AmazonTest1,AMZN,All,Volatility
-AmazonTest2,AMZN,WarOnUkraine,Volatility
-AmazonTest3,AMZN,All,"Volatility,TechnicalIndicators"
-AmazonTest4,AMZN,WarOnUkraine,"Volatility,TechnicalIndicators"
-AmazonTest5,AMZN,All,"Volatility,TechnicalIndicators,Sentiment"
-AmazonTest6,AMZN,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-AppleTest1,AAPL,All,Volatility
-AppleTest2,AAPL,WarOnUkraine,Volatility
-AppleTest3,AAPL,All,"Volatility,TechnicalIndicators"
-AppleTest4,AAPL,WarOnUkraine,"Volatility,TechnicalIndicators"
-AppleTest5,AAPL,All,"Volatility,TechnicalIndicators,Sentiment"
-AppleTest6,AAPL,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-MicrosoftTest1,MSFT,All,Volatility
-MicrosoftTest2,MSFT,WarOnUkraine,Volatility
-MicrosoftTest3,MSFT,All,"Volatility,TechnicalIndicators"
-MicrosoftTest4,MSFT,WarOnUkraine,"Volatility,TechnicalIndicators"
-MicrosoftTest5,MSFT,All,"Volatility,TechnicalIndicators,Sentiment"
-MicrosoftTest6,MSFT,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-TeslaTest1,TSLA,All,Volatility
-TeslaTest2,TSLA,WarOnUkraine,Volatility
-TeslaTest3,TSLA,All,"Volatility,TechnicalIndicators"
-TeslaTest4,TSLA,WarOnUkraine,"Volatility,TechnicalIndicators"
-TeslaTest5,TSLA,All,"Volatility,TechnicalIndicators,Sentiment"
-TeslaTest6,TSLA,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
-SP500Test1,SPX,All,Volatility
-SP500Test2,SPX,WarOnUkraine,Volatility
-SP500Test3,SPX,All,"Volatility,TechnicalIndicators"
-SP500Test4,SPX,WarOnUkraine,"Volatility,TechnicalIndicators"
-SP500Test5,SPX,All,"Volatility,TechnicalIndicators,Sentiment"
-SP500Test6,SPX,WarOnUkraine,"Volatility,TechnicalIndicators,Sentiment"
+TestCaseName,Market,Parameters
+BTC_All_Params,BTC-USD,"close_increasing_1, close_increasing_0, crossover_1, crossover_0, Momentum_Increasing_0, MACD_Increasing_1, MACD_Increasing_0, volatility_label_bullish, volatility_label_bearish, RSI_bullish, RSI_bearish, ROC_bullish, ROC_bearish, sen_compound_increasing_1,sen_compound_increasing_0,  sen_positive_increasing_1, sen_positive_increasing_0 sen_negative_increasing_1, sen_negative_increasing_0"
+BTC_TargetProfitable_High_Lift,BTC-USD,"sen_compound_increasing_1, sen_negative_increasing_1, MACD_Increasing_0, volatility_label_bullish"
+BTC_TargetProfitable_Low_Lift,BTC-USD,"volatility_label_bearish, Momentum_Increasing_0, close_increasing_1, sen_negative_increasing_1, ROC_bullish"
+BTC_TargetProfitable_Zero_Lift,BTC-USD,"sen_compound_increasing_1, sen_positive_increasing_1, sen_negative_increasing_0, crossover_0, Momentum_Increasing_0"
+BTC_Sentiment_Only,BTC-USD,"sen_positive_increasing_1, sen_positive_increasing_0, sen_negative_increasing_1, sen_negative_increasing_0"
+BTC_Technical_Only,BTC-USD,"crossover_1, crossover_0, MACD_Increasing_1, MACD_Increasing_0, RSI_bullish, RSI_bearish, ROC_bullish, ROC_bearish"
+BTC_PCA_Features,BTC-USD,"RSI_Value, volume,neutral_max, bullish_min, sen_compound, ROC_Value, close_pct_change, bullish_mean"
+BTC_LASSO_Features,BTC-USD,"close_pct_change, ROC_Value, bullish_min"
+AZMN_All_Params,AMZN,"close_increasing_1, close_increasing_0, crossover_1, crossover_0, Momentum_Increasing_0, MACD_Increasing_1, MACD_Increasing_0, volatility_label_bullish, volatility_label_bearish, RSI_bullish, RSI_bearish, ROC_bullish, ROC_bearish, sen_compound_increasing_1,sen_compound_increasing_0,  sen_positive_increasing_1, sen_positive_increasing_0 sen_negative_increasing_1, sen_negative_increasing_0"
+AMZN_TargetProfitable_High_Lift,AMZN,"volatility_label_bullish, sen_negative_increasing_0, MACD_Increasing_0, close_increasing_1"
+AMZN_TargetProfitable_Low_Lift,AMZN,"Momentum_Increasing_0, sen_compound_increasing_1, crossover_0, RSI_bearish, MACD_Increasing_1"
+AMZN_TargetProfitable_Zero_Lift,AMZN,"close_increasing_0, sen_positive_increasing_0, volatility_label_bearish"
+AMZN_Sentiment_Only,AMZN,"sen_positive_increasing_1, sen_positive_increasing_0, sen_negative_increasing_1, sen_negative_increasing_0"
+AMZN_Technical_Only,AMZN,"crossover_1, crossover_0, MACD_Increasing_1, MACD_Increasing_0, RSI_bullish, RSI_bearish, ROC_bullish, ROC_bearish"
+MSFT_All_Params,MSFT,"close_increasing_1, close_increasing_0, crossover_1, crossover_0, Momentum_Increasing_0, MACD_Increasing_1, MACD_Increasing_0, volatility_label_bullish, volatility_label_bearish, RSI_bullish, RSI_bearish, ROC_bullish, ROC_bearish, sen_compound_increasing_1,sen_compound_increasing_0,  sen_positive_increasing_1, sen_positive_increasing_0 sen_negative_increasing_1, sen_negative_increasing_0"
+MSFT_TargetProfitable_High_Lift,MSFT,"volatility_label_bearish, MACD_Increasing_0, sen_compound_increasing_0, close_increasing_1"
+MSFT_TargetProfitable_Low_Lift,MSFT,"crossover_1, Momentum_Increasing_0, volatility_label_bullish, sen_negative_increasing_0, RSI_bearish, MACD_Increasing_1"
+MSFT_TargetProfitable_Zero_Lift,MSFT,"sen_negative_increasing_1, Momentum_Increasing_0, sen_compound_increasing_0, MACD_Increasing_1"
+MSFT_Sentiment_Only,MSFT,"sen_positive_increasing_1, sen_positive_increasing_0, sen_negative_increasing_1, sen_negative_increasing_0"
+MSFT_Technical_Only,MSFT,"crossover_1, crossover_0, MACD_Increasing_1, MACD_Increasing_0, RSI_bullish, RSI_bearish, ROC_bullish, ROC_bearish"
+AMZN_PCA_Features,AMZN,"close, volume, close_pct_change, Momentum_Val, tp_stop, sl_stop, RSI_Value, ROC_Value, bearish_mean, bearish_std, neutral_mean, neutral_std, bullish_max"
+AMZN_LASSO_Features,AMZN,"close_pct_change"
+MSFT_PCA_Features,MSFT,"volume, close_pct_change, tp_stop, sl_stop, RSI_Value, ROC_Value, bearish_mean, bearish_min, neutral_mean, neutral_std"
+MSFT_LASSO_Features,MSFT,"close_pct_change, tp_stop, RSI_Value"
