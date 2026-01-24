@@ -1,0 +1,9 @@
+TestCaseName,Market,TweetsId,RandomSample,SampleSize,EngagementPosts,UnderSample,Tokenizer
+Bitcoin,BTC-USD,67082fb60891532d63a3ed67,True,100,False,False,ElKulako/cryptobert
+Nvidia,NVDA,67082fb70891532d63a3ed68,True,100,False,False,ProsusAI/finbert
+Google,GOOGL,67082fb70891532d63a3ed69,True,100,False,False,ProsusAI/finbert
+Amazon,AMZN,67082fb70891532d63a3ed6a,True,100,False,False,ProsusAI/finbert
+Apple,AAPL,67082fb70891532d63a3ed6b,True,100,False,False,ProsusAI/finbert
+Microsoft,MSFT,67082fb70891532d63a3ed6c,True,100,False,False,ProsusAI/finbert
+Tesla,TSLA,67082fb70891532d63a3ed6d,True,100,False,False,ProsusAI/finbert
+SP500,SPY,67082fb70891532d63a3ed6e,True,100,False,False,ProsusAI/finbert

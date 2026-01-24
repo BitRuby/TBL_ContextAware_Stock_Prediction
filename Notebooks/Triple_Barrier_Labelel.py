@@ -132,7 +132,7 @@ class Triple_Barrier_Labelel():
                 prev_label = LABEL_BEARISH
         return labels
     
-    def get_daily_volatility(self, df, span=14, std_coef=(-1.0, 0.5)):
+    def get_daily_volatility(self, df, span=14):
         """
         Calculates the daily volatility of a stock based on the percentage change in price relative to the previous day.
 
@@ -169,18 +169,7 @@ class Triple_Barrier_Labelel():
         prev_day_start = pd.Series(df.close.index[prev_day_start - 1], index=df.close.index[df.close.shape[0] - prev_day_start.shape[0]:])
         daily_returns = df.close.loc[prev_day_start.index] / df.close.loc[prev_day_start.values].values - 1
         vol = daily_returns.ewm(span=span).std()
-        
-        rolling_mean = vol.rolling(window=span).mean()
-        rolling_std = vol.rolling(window=span).std()
-
-        lower = rolling_mean + std_coef[0] * rolling_std
-        upper = rolling_mean + std_coef[1] * rolling_std
-        
-        description = pd.Series(index=vol.index, dtype="object")
-        description[vol > upper] = "bearish"
-        description[vol < lower] = "bullish"
-        description[(vol <= upper) & (vol >= lower)] = "neutral"
-        return vol, description
+        return vol
     
     def map_data(self, labels, day, key):
         day = pd.to_datetime(day)
@@ -195,7 +184,7 @@ class Triple_Barrier_Labelel():
         day = pd.to_datetime(day)
         return any(pd.to_datetime(label['start']) == day for label in labels)
     
-    def transform(self, df, vol, fu, fl, vt):
+    def transform(self, df, vol, fu, fl, vt, sr):
         """
         Transforms stock price data by calculating features such as daily volatility, trading signals, and barriers 
         based on predefined thresholds and labels, which are used to support trading strategies.
@@ -240,7 +229,7 @@ class Triple_Barrier_Labelel():
 
         """
         copy = df.copy()
-        copy["volatility"], copy['volatility_label'] = self.get_daily_volatility(copy, vol)
+        copy["volatility"] = self.get_daily_volatility(copy, vol)
         labels = self.assign_labels(copy, fu, fl, vt)
         copy['label'] = copy.apply(lambda x: self.map_data(labels, x.name, 'label'), axis=1)
         copy['lower_barriers'] = copy.apply(lambda x: self.map_data(labels, x.name, 'lower_barrier'), axis=1)      
@@ -254,9 +243,13 @@ class Triple_Barrier_Labelel():
         # Replace negative values with 0
         copy['tp_stop'] = copy['tp_stop'].apply(lambda x: max(x, 0))
         copy['sl_stop'] = copy['sl_stop'].apply(lambda x: max(x, 0))
+        copy['sharpe_ratio'] = sr
+        copy['upper_barrier_factor'] = fu
+        copy['lower_barrier_factor'] = fl
+        copy['vertical_barrier'] = vt
         return copy
     
-    def optimize(self, data, num_starts=10, initial_cash=100000, fee=0.006):
+    def optimize(self, data, num_starts=10, initial_cash=100000, fee=0.006, freq='6M', param_grid=param_grid):
         """
         Optimizes trading strategy parameters over specified intervals using the Sharpe ratio as the optimization criterion.
 
@@ -296,7 +289,7 @@ class Triple_Barrier_Labelel():
         """
         optimized_params = []
         # Generate interval periods based on frequency and provided timespan
-        intervals = pd.date_range(start=data.index.min(), end=data.index.max(), freq="6M")
+        intervals = pd.date_range(start=data.index.min(), end=data.index.max(), freq=freq)
 
         # For each period optimize vol, fu, fl, vt values by simulating returns and optimizing based on Sharpe ratio
         for start, end in zip(intervals[:-1], intervals[1:]):
@@ -318,7 +311,7 @@ class Triple_Barrier_Labelel():
             def objective_wrapper(x):
                 """Wrapper for the optimization objective: calculates negative Sharpe ratio"""
                 params = bounds_to_params(x)
-                transformed = self.transform(interval_df, params['volatility_period'], params['upper_barrier_factor'], params['lower_barrier_factor'], params['vertical_barrier'])
+                transformed = self.transform(interval_df, params['volatility_period'], params['upper_barrier_factor'], params['lower_barrier_factor'], params['vertical_barrier'],0)
                 cr = Calculate_Returns(
                     initial_cash=initial_cash,
                     fee=fee,

@@ -1,0 +1,48 @@
+1. Load stock OLHCV data from specific date range.
+2. Add optimized labels to data (Bearish/Bullish/Neutral).
+    2.1. Create list of date intervals every with specific frequency (6 month by default).
+    2.2. For each interval optimize parameters: vol - volume, fu - upper barrier factory, fl - lower barrier factor, 
+    vt - vertical barrier. Optimization process is performed by simulating trading returns with specific parameter values.
+    The best set of parameters is obtained by highest score of simulated trading returns measured with Sharpe Ratio.
+        2.2.1. For first step, variables are initialized: best_sharpe_ratio, best_net_profit and best_params. The parameter
+        space is declared as follows: volatility period: 8,9,10,...,15; upper barrier: 1.0, 1.1, 1.2, ..., 1.5;
+        lower barrier: 1.0, 1.1, 1.2, ..., 1.5; and vertical barrier: 8, 9, 10, ..., 15;
+        2.2.2 For each intervals the optimizing algorithm randomly selects parameters values from existing space, then
+        optimize function that simulates trading with selected parameters.
+            2.2.2.1 The optimize function assigns labels to the stock data by Triple Barrier Labeling method.
+            The labels are assigned based on selected parameters. 
+            2.2.2.2 Firstly, the daily volatility is calculated for each day. For each day Bearish/Bullish/Neutral label of 
+            volatility is assigned depends on threshold multiplied relative to rolling volatility mean.
+            2.2.2.3 Labels are assigned for stock data.
+                2.2.2.3.1 For each day barriers are calculated by using formula: 
+                upper = price + price * volatility * Fu,
+                lower = price - price * volatility * Fl.
+                2.2.2.3.2 Depends on upper and lower value, following labels are created: lower_barrier,
+                higher_barrier, start, end, and label. Bullish if high day price cross upper barrier, Bearish 
+                if low day price cross lower barrier, Neutral if neither.
+            2.2.2.4 The labels and associated barrier are mapped to the dataframe.
+            2.2.2.5 Signals (buy, sell, or neutral) are created based on labels.
+            2.2.2.6 The percentage changes for target prices (take profit and stop level) are calculated.
+            2.2.2.7 Negative take profit and stop level values are replaced by zero, maintaining logical constistency.
+        2.2.3 Signals are send to trading simulation. Based on them specific actions are performed:
+        Hold, Keep holding, Short, Open short, Open long, Continue short, Long, Continue long, Close long and open short,
+        Close short and open long. The simulator function work on daily data on specific tradng period.
+        2.2.4 Based on returns and cash flow, the sharpe ratio parameter is obtained.
+    2.3 Having negative sharpe ratio for specific period and parameters, the parameters are saved then 
+    on every loop exection it will be compared with next parameter set. Then replaced if sharpe ratio will be lower.
+    2.4 The best performed value set of volume, upper barrier factory,lower barrier factor, and vertical barrier 
+    for every date period is saved.
+    2.5 Based on them dataset with labels Bearish/Bullish/Neutral is created instead of prices.
+3. The target label is created 
+4. Technical indicators: ROC and RSI are added to the dataset.
+5. Tweet data is loaded.
+    5.1 If engagement posts flag is true, only tweets with at least 20 likes are taken to dataset.
+    5.2 if random sample flag is true, instead of taking all available tweets, only random_sample number of tweets
+    for each day is taken.
+    5.3 Tweets are sorted by day.
+6. Tweets are merged with labels are technical indicators.
+7. Labels are undersampled to round all class representations.
+8. Tweet prompts are generated.
+9. Prompts and targets got applied preprocess and tokenize.
+10. Finetuning of  FinBERT or CryptoBERT is performed. Model is train to predict next label: bullish, bearish or neutral
+based on prompts.
